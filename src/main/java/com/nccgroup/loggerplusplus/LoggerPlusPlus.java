@@ -5,6 +5,7 @@ import burp.api.montoya.MontoyaApi;
 import burp.api.montoya.core.Registration;
 import com.coreyd97.BurpExtenderUtilities.DefaultGsonProvider;
 import com.coreyd97.BurpExtenderUtilities.IGsonProvider;
+import com.nccgroup.loggerplusplus.collector.CollectorController;
 import com.nccgroup.loggerplusplus.exports.ExportController;
 import com.nccgroup.loggerplusplus.filterlibrary.FilterLibraryController;
 import com.nccgroup.loggerplusplus.grepper.GrepperController;
@@ -51,6 +52,7 @@ public class LoggerPlusPlus implements BurpExtension {
     private GrepperController grepperController;
     private MainViewController mainViewController;
     private ReflectionController reflectionController;
+    private CollectorController collectorController;
 
     //UX
     private LoggerMenu loggerMenu;
@@ -82,10 +84,11 @@ public class LoggerPlusPlus implements BurpExtension {
         exportController = new ExportController(preferencesController.getPreferences());
         libraryController = new FilterLibraryController(preferencesController);
         logViewController = new LogViewController(libraryController);
-        logProcessor = new LogProcessor(logViewController.getLogTableController(), exportController);
+        collectorController = new CollectorController(preferencesController.getPreferences());
+        logProcessor = new LogProcessor(logViewController.getLogTableController(), exportController, collectorController);
         grepperController = new GrepperController(logViewController.getLogTableController(), preferencesController);
         contextMenuFactory = new LoggerContextMenuFactory();
-        mainViewController = new MainViewController();
+        mainViewController = new MainViewController(collectorController);
 
 
         montoya.userInterface().registerContextMenuItemsProvider(contextMenuFactory);
@@ -113,6 +116,11 @@ public class LoggerPlusPlus implements BurpExtension {
 
         //Stop log processor executors and pending tasks.
         logProcessor.shutdown();
+        
+        //Shutdown collector
+        if(collectorController != null) {
+            collectorController.shutdown();
+        }
 
         menuBarRegistration.deregister();
 

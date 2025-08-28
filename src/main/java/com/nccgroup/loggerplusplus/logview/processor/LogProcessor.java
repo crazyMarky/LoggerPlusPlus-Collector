@@ -8,6 +8,7 @@ import burp.api.montoya.proxy.ProxyHttpRequestResponse;
 import burp.api.montoya.proxy.http.*;
 import com.coreyd97.BurpExtenderUtilities.Preferences;
 import com.nccgroup.loggerplusplus.LoggerPlusPlus;
+import com.nccgroup.loggerplusplus.collector.CollectorController;
 import com.nccgroup.loggerplusplus.exports.ExportController;
 import com.nccgroup.loggerplusplus.filter.FilterExpression;
 import com.nccgroup.loggerplusplus.filter.colorfilter.TableColorRule;
@@ -39,6 +40,7 @@ public class LogProcessor {
     public static final SimpleDateFormat SERVER_DATE_FORMAT = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
     private final LogTableController logTableController;
     private final ExportController exportController;
+    private final CollectorController collectorController;
     private final Preferences preferences;
     private final ConcurrentHashMap<Integer, LogEntry> entriesPendingProcessing;
     private final ConcurrentHashMap<Integer, Future<LogEntry>> entryProcessingFutures;
@@ -58,9 +60,10 @@ public class LogProcessor {
      * Logic to allow requests independently and match them to responses once received.
      * TODO SQLite integration
      */
-    public LogProcessor(LogTableController logTableController, ExportController exportController) {
+    public LogProcessor(LogTableController logTableController, ExportController exportController, CollectorController collectorController) {
         this.logTableController = logTableController;
         this.exportController = exportController;
+        this.collectorController = collectorController;
         this.preferences = LoggerPlusPlus.instance.getPreferencesController().getPreferences();
 
         this.entriesPendingProcessing = new ConcurrentHashMap<>();
@@ -414,6 +417,11 @@ public class LogProcessor {
         SwingUtilities.invokeLater(() -> {
             if (sendToAutoExporters) exportController.exportNewEntry(logEntry);
             logTableController.getLogTableModel().addEntry(logEntry);
+            
+            // Send to collector if response is available
+            if (logEntry.getResponseBytes() != null) {
+                collectorController.sendToCollector(logEntry);
+            }
         });
     }
 
@@ -421,6 +429,11 @@ public class LogProcessor {
         exportController.exportUpdatedEntry(logEntry);
         SwingUtilities.invokeLater(() -> {
             logTableController.getLogTableModel().updateEntry(logEntry);
+            
+            // Send to collector when entry is updated (response received)
+            if (logEntry.getResponseBytes() != null) {
+                collectorController.sendToCollector(logEntry);
+            }
         });
     }
 

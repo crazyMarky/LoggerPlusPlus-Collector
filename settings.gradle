@@ -1,4 +1,4 @@
-rootProject.name = 'LoggerPlusPlus'
+rootProject.name = 'LoggerPlusPlus-Collector'
 
 //if(file("../BurpExtenderUtilities").exists()){
 //    includeBuild('../BurpExtenderUtilities'){
