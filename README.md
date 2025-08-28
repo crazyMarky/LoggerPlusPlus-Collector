@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/github/license/nccgroup/LoggerPlusPlus?style=for-the-badge" alt="GitHub License">
 </p>
 <p align="right">
-  <b>English</b> | <a href="./README_CN.md">中文版</a>
+  <b>English</b> | <a href="./README_CH.md">中文版</a>
 </p>
 
 Developed by Corey
