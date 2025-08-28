@@ -7,7 +7,9 @@
   <img src="https://img.shields.io/github/downloads/nccgroup/LoggerPlusPlus/total?style=for-the-badge" alt="GitHub All Releases">
   <img src="https://img.shields.io/github/license/nccgroup/LoggerPlusPlus?style=for-the-badge" alt="GitHub License">
 </p>
-[English Version 🇺🇸](README.md)
+<p align="right">
+  <a href="./README.md">English</a> | <b>中文版</b>
+</p>
 
 由 Corey Arthur 开发 [![Twitter Follow](https://img.shields.io/badge/follow-%40CoreyD97-1DA1F2?logo=twitter&style=social)](https://twitter.com/coreyd97/)  
 原作者 Soroush Dalili [![Twitter Follow](https://img.shields.io/badge/follow-%40irsdl-1DA1F2?logo=twitter&style=social)](https://twitter.com/irsdl/)

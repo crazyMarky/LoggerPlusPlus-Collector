@@ -7,7 +7,9 @@
   <img src="https://img.shields.io/github/downloads/nccgroup/LoggerPlusPlus/total?style=for-the-badge" alt="GitHub All Releases">
   <img src="https://img.shields.io/github/license/nccgroup/LoggerPlusPlus?style=for-the-badge" alt="GitHub License">
 </p>
-[中文版文档 🇨🇳](README_CH.md)
+<p align="right">
+  <b>English</b> | <a href="./README_CN.md">中文版</a>
+</p>
 
 Developed by Corey
 Arthur  [![Twitter Follow](https://img.shields.io/badge/follow-%40CoreyD97-1DA1F2?logo=twitter&style=social)](https://twitter.com/coreyd97/)  
