@@ -105,3 +105,148 @@ Logger++ 本身是一个 Burp Suite 多线程日志扩展：
 1. 安装依赖：
    ```bash
    pip install flask
+
+
+```python
+from flask import Flask, request, jsonify, render_template_string
+import json
+import os
+import time
+import base64
+
+app = Flask(__name__)
+
+# 配置
+STORAGE_DIR = "collected_traffic" # 存储目录
+SECRET_KEY = "your_secret_key"  # 请修改此密钥，使其与收集器配置中的密钥匹配
+VERIFY_SECRET = True  # 设置为 False 可禁用密钥验证
+
+# 如果存储目录不存在，则创建它
+os.makedirs(STORAGE_DIR, exist_ok=True)
+
+# 列表页面的 HTML 模板
+LIST_TEMPLATE = '''
+<!DOCTYPE html>
+<html>
+<head>
+    <title>收集到的流量</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        ul { list-style-type: none; padding: 0; }
+        li { margin: 10px 0; padding: 10px; background-color: #f5f5f5; border-radius: 5px; }
+        a { color: #0066cc; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h1>收集到的流量</h1>
+    <ul>
+    {% for file in files %}
+        <li><a href="/view/{{ file }}">{{ file }}</a></li>
+    {% endfor %}
+    </ul>
+</body>
+</html>
+'''
+
+# 详情页面的 HTML 模板
+VIEW_TEMPLATE = '''
+<!DOCTYPE html>
+<html>
+<head>
+    <title>流量详情</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1, h2 { color: #333; }
+        pre { background-color: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto; }
+        .request { border-left: 4px solid #4CAF50; }
+        .response { border-left: 4px solid #2196F3; }
+        .metadata { border-left: 4px solid #FF9800; }
+        a { color: #0066cc; text-decoration: none; margin-bottom: 20px; display: inline-block; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <a href="/list">← 返回列表</a>
+    <h1>流量详情</h1>
+    <h2>元数据</h2>
+    <pre class="metadata">{{ metadata }}</pre>
+    <h2>请求</h2>
+    <pre class="request">{{ request }}</pre>
+    <h2>响应</h2>
+    <pre class="response">{{ response }}</pre>
+</body>
+</html>
+'''
+
+@app.route("/recv", methods=["POST"])
+def receive_traffic():
+    try:
+        data = request.json
+        
+        # 如果启用，则验证密钥
+        if VERIFY_SECRET:
+            if "secret" not in data or data["secret"] != SECRET_KEY:
+                return jsonify({"status": "error", "message": "无效的密钥"}), 403
+        
+        # 提取数据
+        subsystem = data.get("subsystem", "unknown")
+        host = data.get("host", "unknown")
+        req = data.get("request", "")
+        resp = data.get("response", "")
+        
+        # 使用时间戳创建文件名
+        timestamp = int(time.time())
+        filename = f"{timestamp}_{subsystem}_{host}.json"
+        filepath = os.path.join(STORAGE_DIR, filename)
+        
+        # 保存到文件
+        with open(filepath, "w") as f:
+            json.dump(data, f, indent=2)
+        
+        return jsonify({"status": "success", "message": "流量已接收并保存"})
+    
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route("/list")
+def list_files():
+    files = os.listdir(STORAGE_DIR)
+    files.sort(reverse=True)  # 最新文件排在最前
+    return render_template_string(LIST_TEMPLATE, files=files)
+
+@app.route("/view/<filename>")
+def view_file(filename):
+    try:
+        filepath = os.path.join(STORAGE_DIR, filename)
+        with open(filepath, "r") as f:
+            data = json.load(f)
+        
+        # 准备元数据
+        metadata = {
+            "subsystem": data.get("subsystem", "unknown"),
+            "host": data.get("host", "unknown"),
+            "timestamp": filename.split("_")[0]
+        }
+        
+        # 获取请求和响应数据
+        request_data = data.get("request", "")
+        response_data = data.get("response", "")
+        
+        return render_template_string(
+            VIEW_TEMPLATE,
+            metadata=json.dumps(metadata, indent=2, ensure_ascii=False),
+            request=request_data,
+            response=response_data
+        )
+    
+    except Exception as e:
+        return f"错误: {str(e)}", 500
+
+if __name__ == "__main__":
+    print(f"收集器后端服务器正在 http://127.0.0.1:5000 运行")
+    print(f"数据存储目录: {os.path.abspath(STORAGE_DIR)}")
+    print(f"密钥验证: {'已启用' if VERIFY_SECRET else '已禁用'}")
+    app.run(debug=True)
+```
